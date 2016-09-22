@@ -1,8 +1,0 @@
-
-@@ check the spark version
-spark-submit --version
-
-spark-shell
-sc-version
-
-devtools::install_github("SKKU-SKT/ggplot2.SparkR")
