@@ -1,0 +1,96 @@
+#################### flume installation and set up guide  ###############
+@@ ssh to the hadoop cloudera and then login the root
+@@ path >>> usr/lib/flume-ng/conf; create a xxxxx.conf file as flume config
+@@ write the following in to the file
+agent.channels.memory-channel.type = memory
+agent.sources.tail-source.type = exec
+agent.sources.tail-source.command = tail -F /var/log/simple.log
+agent.sources.tail-source.channels = memory-channel
+agent.sinks.log-sink.channel = memory-channel
+agent.sinks.log-sink.type = logger
+
+agent.sinks.hdfs-sink.channel = memory-channel
+agent.sinks.hdfs-sink.type = hdfs
+agent.sinks.hdfs-sink.hdfs.path = hdfs://localhost:8020/tmp/abc/system.log/
+agent.sinks.hdfs-sink.hdfs.fileType = DataStream
+agent.channels = memory-channel
+agent.sources = tail-source
+agent.sinks = log-sink hdfs-sink
+
+
+@@ make sure you are in the flume-ng directory to execut the flume anget
+bin/flume-ng agent --conf ./conf/ -f conf/rich.conf -Dflume.root.logger=DEBUG,console -n agent
+
+
+@@ running Simple Http Service to log http access request
+python -m SimpleHTTPServer 3314 > /dev/null 2 >> /var/log/simple.log &
+
+
+@@ calling http service to populate the logs
+for i in seq 1 60; do curl -X GET localhost:3314; done
+
+
+agent.sources = source1
+agent.channels = channel1
+agent.sinks = sink1
+
+agent.sources.source1.type = org.apache.flume.source.kafka.KafkaSource
+agent.sources.source1.zookeeperConnect = localhost:2181
+agent.sources.source1.topic = Hello-Kafka
+agent.sources.source1.groupId = techseeker-consumer-group
+agent.sources.source1.channels = channel1
+agent.sources.source1.interceptors = i1
+agent.sources.source1.interceptors.il.type = timestamp
+agent.sources.source1.kafka.consumer.timeout.ms = 100
+
+agent.channels.channel1.type = memory
+agent.channels.channel1.capacity = 10000
+agent.channels.channel1.transactionCapacity = 1000
+
+agent.sinks.sink1.type = hdfs
+agent.sinks.sink1.hdfs.path = hdfs://localhost:8020/tmp/kafka/%{topic}/%y-%m-%d
+agent.sinks.sink1.hdfs.rollInterval = 5
+agent.sinks.sink1.hdfs.rollSize = 0
+agent.sinks.sink1.hdfs.rollCount = 0
+agent.sinks.sink1.hdfs.fileType = DataStream
+"kafkasource.conf" [noeol] 24L, 926C
+
+
+@@ make sure you are in the flume-ng directory to execut the flume anget
+bin/flume-ng agent --conf ./conf/ -f conf/kafkasource.conf -Dflume.root.logger=DEBUG,console -n agent
+
+
+
+tier1.sources  = source1
+tier1.channels = channel1
+tier1.sinks = sink1
+
+tier1.sources.source1.type = org.apache.flume.source.kafka.KafkaSource
+tier1.sources.source1.zookeeperConnect = localhost:2181
+tier1.sources.source1.topic = Hello-Kafka
+tier1.sources.source1.groupId = techseeker-consumer-group
+tier1.sources.source1.channels = channel1
+tier1.sources.source1.interceptors = i1
+tier1.sources.source1.interceptors.i1.type = timestamp
+tier1.sources.source1.kafka.consumer.timeout.ms = 100
+
+tier1.channels.channel1.type = memory
+tier1.channels.channel1.capacity = 10000
+tier1.channels.channel1.transactionCapacity = 1000
+
+tier1.sinks.sink1.type = hdfs
+tier1.sinks.sink1.hdfs.path = hdfs://localhost:8020/tmp/kafka/%{topic}/%y-%m-%d
+tier1.sinks.sink1.hdfs.rollInterval = 5
+tier1.sinks.sink1.hdfs.rollSize = 0
+tier1.sinks.sink1.hdfs.rollCount = 0
+tier1.sinks.sink1.hdfs.fileType = DataStream
+tier1.sinks.sink1.channel = channel1
+
+@@ make sure you have this jar file " zookeeper‐3.4.5‐cdh5.4.2.jar "under this folder
+@@ " /usr/lib/flume‐ng/lib "; if you don't have it follow below steps
+wget http://repository.cloudera.com/cloudera/cloudera-repos/org/apache/zookeeper/zookeeper/3.4.5-cdh5.4.2.1/zookeeper-3.4.5-cdh5.4.2.1.jar
+
+
+@@ make sure you are in the flume-ng directory to execut the flume anget
+bin/flume-ng agent --conf ./conf/ -f conf/kafkafile.conf -Dflume.root.logger=DEBUG,console -n tier1
+

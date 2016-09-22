@@ -1,0 +1,11 @@
+/crunch/target/
+/ingestion/target/
+/target/
+/pig/target/
+/pigUdf/target/
+.DS_Store
+/nosql/target/
+/realtime/target/
+/hdfs/target/
+/usecase/target/
+/mrcassandra/target/

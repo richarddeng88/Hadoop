@@ -1,0 +1,18 @@
+##########################################################################################
+
+
+#################use case example
+Facebook, for example, is adding more than 15TB of data into their
+Hadoop cluster every day[8] and is subsequently processing it all. One
+source of this data is click-stream logging, saving every step a user
+does on their website, or on sites that use the social plugins offered by
+Facebook. This is an ideal case in which batch processing to build
+machine learning models for predictions and recommendations is
+appropriate.
+
+Facebook also has a real-time component, which is its messaging
+system, including chat, wall posts, and email. This amounts to 135+
+billion messages per month[9], and storing this data over a certain
+number of months creates a huge tail that needs to be handled
+efficiently. 
+

@@ -1,0 +1,180 @@
+############################### HIVE ###################################
+
+############################### 1. initialization and basic ###################################
+@@ define the initialization file   --- you can add jar file to hadoop distributed cashe. 
+sudo nano /usr/lib/hive/bin/.hiverc
+
+@@ set print the db name, column name
+set hiveconf:hive.cli.print.current.db=true;
+set hive.cli.print.header=true;
+set hive.exec.dynamic.partition=true;
+set hive.exec.dynamic.partition.mode=nostrict;
+set hive.exec.max.dynamic.partitions.pernode=500;
+
+@@ in terminal, you can use hive queries. and you can send the hive query result to a file
+hive -e "select * from employees limit 10" > output.txt
+
+@@ regular commmand in hive CLI == you don't need to leave hive CLI to sum smiple. bash shell command. type ! followed by the command. 
+! pwd;
+
+@@ HADOOP command in hive CLI == you can run hadoop dfs ... commands within the hive CLI
+dfs -ls ;
+
+@@ file format :: stored as 
+textfile, sequencefile, RCFILE
+
+############################### 2. HiveQL : data Definition ###################################
+@@ you can copy the schema of an existing table ;
+create table if not exists employes2 like employees;
+
+@@ you can see partitions of a table 
+SHOW PARTITIONS employees;
+SHOW PARTITIONS employees PARTITION(country='US');
+
+@@ you can change the table properties: rename table, add partition, change a partition location, drop a partition, 
+@@ change and add columns, deleting and replacing columns, alter storage properties, 
+alter table employes2 rename to employee3;
+
+@@ only scan input data once and split it multiple ways, saving time.
+FROM staged_employees se
+INSERT OVERWRITE TABLE employees
+	PARTITION (country = 'US', state = 'OR')
+	SELECT * WHERE se.cnty = 'US' AND se.st = 'OR'
+INSERT OVERWRITE TABLE employees
+	PARTITION (country = 'US', state = 'CA')
+	SELECT * WHERE se.cnty = 'US' AND se.st = 'CA'
+
+
+@@@@@@@@@@@@@@@@@@ use case example@@@@@@@@@@@@@@@@@@
+Suppose our Extract, Transform, and Load (ETL) process ingests and aggregates logfiles in our environment, converting each log message to a tab-delimited record and also decomposing the timestamp into separate year, month, and day fields, and a combined hms field for the remaining hour, minute, and second parts of the timestamp, for reasons that will become clear in a moment. You could do this parsing of log messages using the string parsing functions built into Hive or Pig, for example. Alternatively, we could use smaller integer types for some of the timestamp-related fields to conserve space.
+
+@@ create external table
+CREATE EXTERNAL TABLE IF NOT EXISTS log_messages (
+	hms INT,
+	severity STRING,
+	server STRING,
+	process_id INT,
+	message STRING)
+PARTITIONED BY (year INT, month INT, day INT)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t';
+
+@@ add data into partition
+ALTER TABLE log_messages ADD PARTITION(year = 2012, month = 1, day = 2)
+LOCATION 'hdfs://master_server/data/log_messages/2012/01/02';
+
+############################### 3. HiveQL : Data Manipulation ###################################
+@@ load data from file 
+LOAD DATA LOCAL INPATH '${env:HOME}/california-employees'
+OVERWRITE INTO TABLE employees
+PARTITION (country = 'US', state = 'CA');
+
+@@ insert data using queries from other tables  --- static partitions
+INSERT OVERWRITE TABLE employees
+PARTITION (country = 'US', state = 'OR')
+SELECT * FROM staged_employees se
+WHERE se.cnty = 'US' AND se.st = 'OR';
+
+@@ dynamic partition inserts
+INSERT OVERWRITE TABLE employees
+	PARTITION (country, state)
+SELECT ..., se.cnty, se.st
+FROM staged_employees se;
+
+@@ we can create a table and insert query results into it; !!!This feature can’t be used with external tables. !!!
+@@ A common use for this feature is to extract a convenient subset of data from a larger, more unwieldy table.
+CREATE TABLE ca_employees
+AS SELECT name, salary, address
+FROM employees
+WHERE se.state = 'CA';
+
+@@ write the query table into local file. but it didn't execute sucessfully??? why??
+insert overwrite local directory '/home/cloudera/Desktop/F_emp'
+select emp_no, first_name, last_name
+from employees
+where gender = 'F';
+
+@@@@@@@ use case common scenario @@@@@@@@@@
+This example suggests one common scenario where this feature is useful: data has been staged in a directory, exposed to Hive as an external table, and now you want to put it into the final, partitioned table. A workflow like this is also useful if you want the target table to have a different record format than the source table.
+
+############################### 4. HiveQL : Queries ###################################
+@@ count the unique ..... this way
+select count(distinct gender) from employees;
+
+@@ Nested select statement
+FROM (
+ SELECT upper(name), salary, deductions["Federal Taxes"] as fed_taxes,
+ round(salary * (1 - deductions["Federal Taxes"])) as salary_minus_fed_taxes
+ FROM employees
+ ) e
+ SELECT e.name, e.salary_minus_fed_taxes
+ WHERE e.salary_minus_fed_taxes > 70000;
+
+@@ CASE WHEN THEN END STATMENT
+SELECT name, salary,
+ CASE
+  WHEN salary < 50000.0 THEN 'low'
+  WHEN salary >= 50000.0 AND salary < 70000.0 THEN 'middle'
+  WHEN salary >= 70000.0 AND salary < 100000.0 THEN 'high'
+  ELSE 'very high'
+ END AS bracket 
+FROM employees;
+
+
+
+@@ add jars into hive, and create tem function. 
+add jar /home/cloudera/Desktop/jar/hive-reverse.jar;
+create temporary function revs as 'edu.bigdata.training.hive.ReverseString';
+list jars;
+describe function extended reverse;
+
+############################### creating tables ###################################
+@@ create a table and then load the file from lcoal file system or HDFS
+create table if not exists camera (
+  address String,
+  direction String,
+  street String,
+  CrossStreet String,
+  intersection String,
+  lantitute String,
+  longtitue String
+  )
+row format delimited
+fields terminated by ','
+lines terminated by '\n'
+stored as textfile;
+
+load data local inpath '/home/cloudera/Desktop/rich/cameras.csv' overwrite into table camera;
+
+
+@@ there is file in the HDFS, and we don't want move to the hive warehouse, just use metainfo.
+create external table if not exists cameraEX (
+  address String,
+  direction String,
+  street String,
+  CrossStreet String,
+  intersection String,
+  lantitute String,
+  longtitue String
+  )
+row format delimited
+fields terminated by ','
+lines terminated by '\n'
+stored as textfile
+location '/user/cloudera/test/';
+
+create external table if not exists stocks (
+  exchange string,
+  symbol string, 
+  date string,
+  price_open double, 
+  price_high double,
+  price_low double,
+  price_close double,
+  volumn int,
+  price_adj_close double
+  )
+row formated delimited
+fields terminated by ','
+stored as textfile
+location 'user/cloudera/data/stocks/NYSE/'
+

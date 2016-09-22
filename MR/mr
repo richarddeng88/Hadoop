@@ -1,0 +1,10 @@
+hadoop jar /usr/lib/hadoop-0.20-mapreduce/contrib/streaming/hadoop-streaming-2.6.0-mr1-cdh5.4.2.jar -mapper mapper.py -reducer reducer.py -file mapper.py -file reducer.py -input myinput -output joboutput
+
+## take a small sample of data for test
+cat testf1 | python mapper.py | sort | python reducer.py
+
+## work on the whold data and output the result
+cat purchases.txt |python mapper.py | sort |python reducer.py > output
+
+
+

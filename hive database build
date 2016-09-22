@@ -1,0 +1,85 @@
+######### horton works hive tutorial########
+@ data download link
+wget http://www.grouplens.org/system/files/ml-100k.zip
+
+@@ create managed table;
+create table movies(
+  id int,
+  title String,
+  release_year String,
+  release_date String,
+  imdb_url String,
+  unkown int,
+  action int,
+  adventure int,
+  animation int,
+  children int,
+  comedy int,
+  crime int,
+  file_noir int, 
+  horror int,
+  nusical int,
+  mystery int,
+  romance int,
+  sci_fi int,
+  thriller int,
+  war int,
+  western int
+  )
+row format delimited
+fields terminated by '|'
+stored as textfile;
+
+@@ put data FROM local to HDFS
+hadoop fs -put u.user movie_data/userinfo/
+hadoop fs -put u.item movie_data/movie/
+
+@@load data from HDFS
+load data inpath '/user/cloudera/movie_data/movie/' into table movies;
+
+@@ create a new table for userinfo, this time hive only manage the matadata
+create external table users (
+  id int,
+  age int,
+  gender String, 
+  occupation String,
+  zip_code String
+  )
+row format delimited
+fields terminated by '|'
+stored as textfile
+location '/user/cloudera/movie_data/userinfo';
+
+@@ employ info to save JSON file
+CREATE TABLE emp_info (
+	name STRING,
+	salary FLOAT,
+	subordinates ARRAY<STRING>,
+	deductions MAP<STRING, FLOAT>,
+	address STRUCT<street:STRING, city:STRING, state:STRING, zip:INT>
+)
+	ROW FORMAT DELIMITED
+		FIELDS TERMINATED BY '\001'
+		COLLECTION ITEMS TERMINATED BY '\002'
+		MAP KEYS TERMINATED BY '\003'
+	LINES TERMINATED BY '\n'
+	STORED AS TEXTFILE;
+
+{
+"name": "John Doe",
+"salary": 100000.0,
+"subordinates": ["Mary Smith", "Todd Jones"],
+"deductions": {
+		"Federal Taxes": .2,
+		"State Taxes": .05,
+		"Insurance":
+		.1
+		},
+"address": {
+		"street": "1 Michigan Ave.",
+		"city": "Chicago",
+		"state": "IL",
+		"zip":60600
+		}
+}
+
