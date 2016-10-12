@@ -1,0 +1,44 @@
+###### mysql to HDFS (success)
+
+sqoop import --connect jdbc:mysql://localhost:3306/employees  --username root --password cloudera --table employees --target-dir richdb
+
+@@ protect your password
+sqoop import --connect jdbc:mysql://localhost:3306/employees --username root --P --table employees
+
+sqoop import --connect jdbc:mysql://localhost:3306/employees --username root --table employees --password-file sqoop1.password
+
+echo "cloudera" > sqoop1.password
+hadoop dfs -put sqoop1.password /user/$USER/sqoop1.password
+hadoop dfs -chown 400 /user/$USER/sqoop1.password
+
+GRANT ALL PRIVILEGES ON *.* TO 'cloudera@localhost' IDENTIFIED BY 'cloudera' WITH GRANT OPTION;
+
+@@ import all the talbes ( if there is no primary key, you can make #mapper = 1)
+sqoop import-all-tables --connect jdbc:mysql://localhost:3306/employees  --username root --password cloudera --m 1
+
+@@ incremental import 
+sqoop import --connect jdbc:mysql://localhost:3306/employees --username root --P --table product --incremental append --check-column id --last-value 002
+
+@@ SQOOP CREATE A JOB ( there is sapce between -- and import)
+sqoop job --create myjob -- import --connect jdbc:mysql://localhost:3306/employees ‐‐username root ‐P ‐‐table product --incremental append --check-column id --last-value 005
+
+sqoop job --create myjob -- import --connect jdbc:mysql://localhost:3306/employees --username root --P --table employees
+
+@@ export from HDFS (you need to predefine a new table before you exprot data)
+sqoop export --connect jdbc:mysql://localhost:3306/employees --username root --P --table employees --export-dir richdb
+
+
+
+
+###### MYSQL TO HDFS AS squencefile (success)
+sqoop import --connect jdbc:mysql://localhost:3306/employees --username root --password cloudera --table employees --target-dir richinput --class-name emp --as-sequencefile
+
+
+###### MYSQL TO HIVE (success)
+sqoop import --connect jdbc:mysql://localhost:3306/employees --username root --password cloudera --table employees --hive-import --create-hive-table --hive-table rich --target-dir /usr/hive/warehouse/
+
+
+###### MYSQL TO HBASE (success)
+sqoop import --connect jdbc:mysql://localhost:3306/employees --table employees --username root --P --hbase-table tem11 --column-family employeeINFO --hbase-create-table --m 1
+
+

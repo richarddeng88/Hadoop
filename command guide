@@ -1,0 +1,102 @@
+##### define HOME for hadoop sqoop , flume, hbase, kafka
+export HADOOP_HOME=/home/richard/hadoop
+export PATH=$PATH:$HADOOP_HOME/bin
+export SQOOP_HOME=/home/richard/sqoop
+export PATH=$PATH:$SQOOP_HOME/bin
+export FLUME_HOME=/home/richard/flume
+export PATH=$PATH:$FLUME_HOME/bin
+export HBASE_HOME=/home/richard/hbase
+export PATH=$PATH:$HBASE_HOME/bin
+
+@@ create jar
+mvn package
+
+@@ to check the what project has been install in the system,(eg, you'll see no kafka)
+cd /usr/lib
+
+@@ to check the global variables
+env
+
+
+
+
+
+############################ zooker and kafka projects ##############################################
+@@ check zookeeper status
+zookeeper-server status
+
+
+##### 2. start the server. 
+@@ if the zookeeper server is not started, you need to start it first. 
+bin/zookeeper-server-start.sh config/zookeeper.properties
+@@ come to the kafka/bin dir and then exct the following, to start zookeeper and kafka
+./kafka-server-start.sh ../config/server.properties
+@@ kafka port is 9092, let test if the port is working
+nc -v localhost  9092
+
+##### 3. create a topic
+./kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic test
+@@ check the topics
+./kafka-topics.sh --zookeeper localhost:2181 --list
+
+#### 4.Send some messages
+./kafka-console-producer.sh --broker-list localhost:9092 --topic test
+
+env
+which hadoop
+cat /usr/bin/hadoop
+cat /usr/lib/hadoop/bin/hadoop 
+
+
+############################### PostgreSQL database ########################################
+@@ check database info 
+\l
+@@ list tables
+\d
+@@ give info of tables
+\d table_name
+@@ leave ProtgreSQL 
+\q
+
+@@ import a csv file into database. you need to create a table first. 
+@@ then delete the the csv file's headers. otherwise it returns error.
+sed '1d' ad_clicks.csv > ad1.csv
+
+@@ type the following command in psql>>>>>>
+COPY gameclicks FROM '/home/cloudera/Desktop/coursera-master/big-data-3/game1.csv' DELIMITER ',' CSV;
+
+@@ below is the querying from two tables using join.
+select adid, buyid, adclicks.userid 
+	from adclicks join buyclicks on adclicks.userid = buyclicks.userid;
+
+
+
+############################### HDFS reading and writing ########################################
+@@ make two directories
+hadoop fs -mkdir /user/cloudera/dir1 /user/cloudera/dir2
+
+@@ check the size of folder
+hadoop fs -du /user/cloudera/
+
+@@ Copies/Downloads files from HDFS to the local file system
+hadoop fs -get /user/cloudera/shakespeare.txt ssss
+
+
+
+############################### MAP REDUCE job in JAVA######################################
+hadoop jar wordcount.jar edu.bigdata.training.core.mapreduce.WordCount shakespeare.txt output
+
+
+
+
+
+
+################################# horton works ####################################
+@@ hue ip address: 
+http://<server.ip>:8000
+service hue start
+
+
+
+
+
